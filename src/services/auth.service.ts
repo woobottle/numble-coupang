@@ -1,4 +1,3 @@
-import axios from "axios";
 import cookies from "js-cookie";
 import ApiService from "./api.service";
 
@@ -59,7 +58,7 @@ class AuthService extends ApiService {
 
   /** 이미 생성된 계정의 토큰을 발급받습니다. */
   async login(email: string, password: string) {
-    const { data } = await axios.post(
+    const { data } = await this.post(
       process.env.NEXT_PUBLIC_API_HOST + "/auth/login",
       { email, password }
     );
