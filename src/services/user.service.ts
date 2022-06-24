@@ -1,15 +1,14 @@
-import axios from "axios";
 import cookies from "js-cookie";
+import ApiService from "./api.service";
 
-class UserService {
+class UserService extends ApiService {
   async me() {
     const accessToken = cookies.get("accessToken");
     if (!accessToken) {
       return;
     }
 
-    const { data } = await axios.get(
-      process.env.NEXT_PUBLIC_API_HOST + "/users/me",
+    const { data } = await this.get("/users/me",
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -21,9 +20,7 @@ class UserService {
   }
 
   async read(id: number) {
-    const { data } = await axios.get(
-      process.env.NEXT_PUBLIC_API_HOST + "/users/" + id
-    );
+    const { data } = await this.get(`/users/${id}`);
 
     return data;
   }

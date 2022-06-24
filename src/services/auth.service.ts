@@ -1,5 +1,6 @@
 import axios from "axios";
 import cookies from "js-cookie";
+import ApiService from "./api.service";
 
 type SignupAgreements = {
   privacy: boolean;
@@ -12,7 +13,7 @@ type SignupAgreements = {
     | false;
 };
 
-class AuthService {
+class AuthService extends ApiService {
   /** refreshToken을 이용해 새로운 토큰을 발급받습니다. */
   async refresh() {
     const refreshToken = cookies.get("refreshToken");
@@ -20,18 +21,17 @@ class AuthService {
       return;
     }
 
-    const { data } = await axios.post(
-      process.env.NEXT_PUBLIC_API_HOST + "/auth/refresh",
-      null,
-      {
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
-        },
-      }
-    );
-
-    cookies.set("accessToken", data.access, { expires: 1 });
-    cookies.set("refreshToken", data.refresh, { expires: 7 });
+    const { data } = await this.post("/auth/refresh", null, {
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+      },
+    });
+    
+    this.setAccessToken({ accessToken: data.access, config: { expires: 1 } });
+    this.setRefreshToken({
+      refreshToken: data.refresh,
+      config: { expires: 7 },
+    });
   }
 
   /** 새로운 계정을 생성하고 토큰을 발급받습니다. */
@@ -42,13 +42,19 @@ class AuthService {
     phoneNumber: string,
     agreements: SignupAgreements
   ) {
-    const { data } = await axios.post(
-      process.env.NEXT_PUBLIC_API_HOST + "/auth/signup",
-      { email, password, name, phoneNumber, agreements }
-    );
+    const { data } = await this.post("/auth/signup", {
+      email,
+      password,
+      name,
+      phoneNumber,
+      agreements,
+    });
 
-    cookies.set("accessToken", data.access, { expires: 1 });
-    cookies.set("refreshToken", data.refresh, { expires: 7 });
+    this.setAccessToken({ accessToken: data.access, config: { expires: 1 } });
+    this.setRefreshToken({
+      refreshToken: data.refresh,
+      config: { expires: 7 },
+    });
   }
 
   /** 이미 생성된 계정의 토큰을 발급받습니다. */
@@ -57,9 +63,29 @@ class AuthService {
       process.env.NEXT_PUBLIC_API_HOST + "/auth/login",
       { email, password }
     );
+    
+    this.setAccessToken({ accessToken: data.access, config: { expires: 1 }});
+    this.setRefreshToken({ refreshToken: data.refresh, config: { expires: 7 }});
+  }
 
-    cookies.set("accessToken", data.access, { expires: 1 });
-    cookies.set("refreshToken", data.refresh, { expires: 7 });
+  setAccessToken({
+    accessToken,
+    config,
+  }: {
+    accessToken: string;
+    config: { [key: string]: any };
+  }) {
+    cookies.set("accessToken", accessToken, config);
+  }
+
+  setRefreshToken({
+    refreshToken,
+    config,
+  }: {
+    refreshToken: string;
+    config: { [key: string]: any };
+  }) {
+    cookies.set("refreshToken", refreshToken, config);
   }
 }
 
